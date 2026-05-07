@@ -43,3 +43,6 @@ Thumbs.db
 # Preview files (demo only)
 demo_ui/preview.html
 demo_ui/app_preview.html
+
+# Claude Code local settings
+.claude/
