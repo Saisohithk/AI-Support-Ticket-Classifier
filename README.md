@@ -1,6 +1,10 @@
 # AI Support Ticket Classifier
 
-A multi-agent orchestration system that automatically classifies and routes support tickets using coordinated autonomous agents. This project leverages agent-based architecture with LangGraph to provide intelligent ticket management and categorization.
+A multi-agent orchestration system that automatically classifies and routes support tickets using coordinated autonomous agents. This project leverages agent-based architecture with LangGraph to process and categorize support requests intelligently.
+
+[![API Deployed on Render](https://img.shields.io/badge/API-Render-46E3B7?logo=render&logoColor=white)](https://ai-support-ticket-classifier.onrender.com/)
+
+&nbsp;
 
 ## 📋 Table of Contents
 
@@ -18,7 +22,7 @@ A multi-agent orchestration system that automatically classifies and routes supp
 
 ## 🎯 Overview
 
-The AI Support Ticket Classifier is a sophisticated multi-agent system designed to automate the process of analyzing, classifying, and routing support tickets. Multiple autonomous agents work together in an orchestrated workflow to understand ticket context, assign appropriate categories, determine priority levels, and route tickets to the right departments. This system reduces manual workload, optimizes ticket distribution, and improves response times.
+The AI Support Ticket Classifier is a sophisticated multi-agent system designed to automate the process of analyzing, classifying, and routing support tickets. Multiple autonomous agents work together through LangGraph to provide intelligent ticket management, ensuring efficient handling and appropriate escalation.
 
 ## ✨ Features
 
