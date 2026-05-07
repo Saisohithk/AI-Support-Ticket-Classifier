@@ -1,6 +1,6 @@
 # AI Support Ticket Classifier
 
-A machine learning-powered web application that automatically classifies and categorizes support tickets using artificial intelligence. This project combines Python backend logic with an HTML/CSS frontend to provide an intelligent ticket management system.
+A multi-agent orchestration system that automatically classifies and routes support tickets using coordinated autonomous agents. This project leverages agent-based architecture with LangGraph to provide intelligent ticket management and categorization.
 
 ## 📋 Table of Contents
 
@@ -10,57 +10,78 @@ A machine learning-powered web application that automatically classifies and cat
 - [Project Structure](#project-structure)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Agent System](#agent-system)
 - [Configuration](#configuration)
+- [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## 🎯 Overview
 
-The AI Support Ticket Classifier is designed to automate the process of categorizing support tickets by analyzing their content and assigning them to appropriate categories or departments. This reduces manual workload and ensures tickets are routed to the right teams efficiently.
+The AI Support Ticket Classifier is a sophisticated multi-agent system designed to automate the process of analyzing, classifying, and routing support tickets. Multiple autonomous agents work together in an orchestrated workflow to understand ticket context, assign appropriate categories, determine priority levels, and route tickets to the right departments. This system reduces manual workload, optimizes ticket distribution, and improves response times.
 
 ## ✨ Features
 
-- **Intelligent Classification**: AI-powered ticket categorization based on content analysis
-- **Multi-category Support**: Classify tickets into multiple predefined categories
-- **Real-time Processing**: Quick classification results for incoming tickets
-- **User-friendly Interface**: Clean, responsive HTML interface for easy interaction
-- **Batch Processing**: Process multiple tickets simultaneously
-- **Performance Analytics**: Track classification accuracy and metrics
+- **Multi-Agent Architecture**: Coordinated autonomous agents for specialized ticket processing
+- **Intelligent Classification**: Advanced ticket categorization using agent collaboration
+- **Priority Assessment**: Automatic priority scoring and escalation based on ticket content
+- **Smart Routing**: Distribute tickets to appropriate departments and teams
+- **Production Ready**: Built-in modules for safety, reliability, and cost optimization
+- **PII Protection**: Automatic detection and redaction of personally identifiable information
+- **Prompt Injection Defense**: Security measures against malicious prompt injection attempts
+- **Interactive UI**: User-friendly interface for ticket submission and monitoring
+- **Comprehensive Testing**: Full test suite for validation and quality assurance
 
 ## 🛠️ Technology Stack
 
-- **Backend**: Python
-  - Machine Learning model for classification
-  - Natural Language Processing (NLP)
-  - Data preprocessing and analysis
+- **Backend**: Python 3.x
+  - LangGraph for agent orchestration and workflow management
+  - Agent-based architecture for distributed processing
+  - Natural Language Processing capabilities
 
-- **Frontend**: HTML, CSS
-  - Responsive web interface
-  - Ticket submission and result display
-  - Dashboard visualization
+- **Frontend**: HTML
+  - Interactive demo UI
+  - Real-time ticket processing interface
+  - Results visualization
+
+- **Production Modules**:
+  - Cost calculation and optimization
+  - Fallback and retry mechanisms
+  - PII redaction and data privacy
+  - Prompt injection detection
+  - Response validation and verification
 
 ## 📁 Project Structure
 
 ```
 AI-Support-Ticket-Classifier/
-├── README.md
-├── requirements.txt
-├── models/
-│   └── classifier_model.pkl
-├── app.py
-├── train.py
-├── templates/
-│   ├── index.html
-│   ├── dashboard.html
-│   └── results.html
-├── static/
-│   ├── css/
-│   │   └── style.css
-│   └── js/
-│       └── script.js
-└── data/
-    ├── training_data.csv
-    └── categories.json
+├── README.md                          # Project documentation
+├── LICENSE                            # MIT License
+├── .env.example                       # Environment variables template
+├── .gitignore                         # Git ignore rules
+├── requirements.txt                   # Python dependencies
+│
+├── main.py                            # Main application entry point
+├── graph.py                           # Multi-agent graph definition and orchestration
+├── schema.py                          # Data schemas and type definitions
+│
+├── production_modules/                # Production-ready safety and reliability modules
+│   ├── __init__.py
+│   ├── cost_calculator.py            # Cost tracking and optimization
+│   ├── fallback_retry.py             # Retry logic and fallback mechanisms
+│   ├── non_determinism.py            # Handling non-deterministic responses
+│   ├── pii_redaction.py              # PII detection and redaction
+│   ├── prompt_injection.py           # Prompt injection attack prevention
+│   ├── prompt_versioning.py          # Prompt version management
+│   ├── structured_output.py          # Structured output validation
+│   └── validate_response.py          # Response validation utilities
+│
+├── demo_ui/                          # User interface for demonstrations
+│   └── index.html                    # Interactive web interface
+│
+└── tests/                            # Test suite
+    ├── __init__.py
+    └── test_classifier.py            # Classifier tests
 ```
 
 ## 🚀 Installation
@@ -82,48 +103,83 @@ AI-Support-Ticket-Classifier/
    pip install -r requirements.txt
    ```
 
-4. **Download pre-trained models (if applicable)**
+4. **Configure environment variables**
    ```bash
-   python download_models.py
+   cp .env.example .env
+   # Edit .env with your configuration
    ```
 
 ## 📖 Usage
 
-1. **Start the application**
+1. **Run the main application**
    ```bash
-   python app.py
+   python main.py
    ```
 
-2. **Open your browser**
-   Navigate to `http://localhost:5000` (or the configured port)
+2. **Access the demo UI**
+   Open `demo_ui/index.html` in your browser or access through the web server
 
 3. **Submit a ticket**
-   - Enter the ticket description in the text area
-   - Click "Classify Ticket"
-   - View the predicted category and confidence score
+   - Enter the ticket description and details
+   - The multi-agent system will analyze and classify the ticket
+   - View classification, priority, and routing results
 
-4. **Train the model (optional)**
-   ```bash
-   python train.py --data-path data/training_data.csv
-   ```
+## 🤖 Agent System
 
-## 🧠 Model Training
+The system uses multiple specialized agents that collaborate through LangGraph:
 
-To retrain the model with your own data:
+- **Analyzer Agent**: Extracts key information and context from ticket content
+- **Classifier Agent**: Categorizes tickets into predefined categories
+- **Priority Agent**: Determines priority level based on ticket characteristics
+- **Router Agent**: Routes tickets to appropriate departments and teams
+- **Orchestrator**: Coordinates agent workflow and manages data flow
 
-1. **Prepare your data**
-   - Format: CSV with columns `[ticket_description, category]`
-   - Place in `data/training_data.csv`
+### Agent Communication
 
-2. **Run training script**
-   ```bash
-   python train.py --epochs 50 --batch-size 32 --test-split 0.2
-   ```
+Agents communicate through a structured workflow graph defined in `graph.py`, enabling:
+- Parallel processing where applicable
+- Sequential dependencies between agents
+- Error handling and fallback mechanisms
+- Logging and monitoring of agent interactions
 
-3. **Evaluate the model**
-   ```bash
-   python evaluate.py
-   ```
+## ⚙️ Configuration
+
+Create a `.env` file in the root directory:
+
+```env
+# Agent Configuration
+AGENT_TIMEOUT=30
+MAX_AGENTS=5
+AGENT_LOG_LEVEL=INFO
+
+# LLM Configuration
+LLM_MODEL=gpt-4
+LLM_TEMPERATURE=0.7
+MAX_RETRIES=3
+
+# Security
+ENABLE_PII_REDACTION=true
+ENABLE_INJECTION_DETECTION=true
+
+# Processing
+BATCH_SIZE=10
+ENABLE_COST_TRACKING=true
+```
+
+## 🧪 Testing
+
+Run the test suite to validate the classifier:
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run specific test file
+python -m pytest tests/test_classifier.py -v
+
+# Run with coverage report
+python -m pytest tests/ --cov=. --cov-report=html
+```
 
 ## 📊 Supported Categories
 
@@ -133,14 +189,6 @@ To retrain the model with your own data:
 - **Feature Request**: Enhancement and feature suggestions
 - **Bug Report**: Software defects and issues
 - **Other**: Miscellaneous inquiries
-
-## 🔍 API Endpoints
-
-- `POST /classify` - Classify a single ticket
-- `POST /batch-classify` - Classify multiple tickets
-- `GET /categories` - Get list of available categories
-- `GET /metrics` - Retrieve model performance metrics
-- `GET /dashboard` - View analytics dashboard
 
 ## 🤝 Contributing
 
@@ -165,8 +213,8 @@ For questions or support, please contact:
 
 ## 🙏 Acknowledgments
 
-- Thanks to the Python ML community for excellent libraries like scikit-learn and NLTK
-- Inspired by modern support ticket management systems
+- Built with LangGraph for agent orchestration
+- Thanks to the AI community for inspiration and best practices
 - Special thanks to all contributors
 
 ---
