@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ai-support-ticket-classifier
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PROMPT_VERSION
+        value: v2
+      - key: DEFAULT_MODEL
+        value: gpt-4o-mini
+      - key: LOG_COSTS
+        value: "true"
