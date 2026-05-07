@@ -107,25 +107,6 @@ AI-Support-Ticket-Classifier/
    python train.py --data-path data/training_data.csv
    ```
 
-## ⚙️ Configuration
-
-Create a `.env` file in the root directory to configure the application:
-
-```env
-FLASK_ENV=development
-DEBUG=True
-MODEL_PATH=models/classifier_model.pkl
-MIN_CONFIDENCE=0.5
-MAX_WORKERS=4
-```
-
-**Configuration Options:**
-- `FLASK_ENV`: Development or production mode
-- `DEBUG`: Enable debug logging
-- `MODEL_PATH`: Path to the trained classification model
-- `MIN_CONFIDENCE`: Minimum confidence threshold for predictions
-- `MAX_WORKERS`: Number of parallel workers for batch processing
-
 ## 🧠 Model Training
 
 To retrain the model with your own data:
@@ -179,7 +160,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For questions or support, please contact:
 - **Author**: Saisohithk
-- **Email**: [your-email@example.com]
+- **Email**: [Saisohithkommana@gmail.com]
 - **GitHub**: [@Saisohithk](https://github.com/Saisohithk)
 
 ## 🙏 Acknowledgments
