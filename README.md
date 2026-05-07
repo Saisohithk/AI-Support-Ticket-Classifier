@@ -6,8 +6,18 @@ A multi-agent orchestration system that automatically classifies and routes supp
 
 &nbsp;
 
+## 🎯 Live Demo
+
+**Demo Link: [AI Support Ticket Classifier](https://ai-support-ticket-classifier.onrender.com/)**
+
+> The live demo connects to a deployed FastAPI backend running the full multi-agent orchestration pipeline:
+> Analyzer → Classifier → Priority Assessment → Smart Routing with LangGraph coordination.
+
+&nbsp;
+
 ## 📋 Table of Contents
 
+- [Live Demo](#-live-demo)
 - [Overview](#overview)
 - [Features](#features)
 - [Technology Stack](#technology-stack)
