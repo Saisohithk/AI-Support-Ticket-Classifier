@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TicketAI — Support Intelligence Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#080e0d; --s1:#0d1a17; --s2:#112118; --s3:#162b1f;
+      --bd:#1a3028; --bd2:#1f3d2e;
+      --accent:#10b981; --accent2:#34d399; --ag:rgba(16,185,129,.15);
+      --text:#e8f5f1; --t2:#7aaa96; --t3:#3d6b57;
+      --green:#22c55e; --yellow:#eab308; --orange:#f97316; --red:#ef4444; --cyan:#06b6d4;
+      --sb:220px; --sb-col:64px;
+    }
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{
+      width:var(--sb-col);height:100vh;position:fixed;top:0;left:0;z-index:50;
+      background:var(--s1);border-right:1px solid var(--bd);
+      display:flex;flex-direction:column;
+      transition:width .25s cubic-bezier(.4,0,.2,1);overflow:hidden;
+    }
+    .sidebar:hover,.sidebar.open{width:var(--sb);}
+    .sidebar-logo{
+      display:flex;align-items:center;gap:.75rem;padding:1.1rem 1rem;
+      border-bottom:1px solid var(--bd);min-height:60px;
+    }
+    .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+    .logo-text{font-size:.95rem;font-weight:800;color:var(--text);white-space:nowrap;opacity:0;transition:opacity .2s .05s;}
+    .sidebar:hover .logo-text,.sidebar.open .logo-text{opacity:1;}
+    .logo-sub{font-size:.65rem;color:var(--t3);white-space:nowrap;}
+
+    .nav-list{flex:1;padding:.75rem .5rem;display:flex;flex-direction:column;gap:.25rem;}
+    .nav-item{
+      display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;
+      border-radius:8px;cursor:pointer;border:none;background:none;color:var(--t2);
+      font-size:.85rem;font-weight:500;white-space:nowrap;width:100%;
+      transition:background .15s,color .15s;position:relative;
+    }
+    .nav-item:hover{background:var(--s3);color:var(--text);}
+    .nav-item.active{background:var(--ag);color:var(--accent2);}
+    .nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .nav-label{opacity:0;transition:opacity .15s .05s;font-size:.85rem;}
+    .sidebar:hover .nav-label,.sidebar.open .nav-label{opacity:1;}
+    .nav-badge{
+      margin-left:auto;background:#ef4444;color:#fff;font-size:.6rem;font-weight:700;
+      padding:.1rem .35rem;border-radius:999px;flex-shrink:0;
+    }
+    .sidebar-footer{padding:.75rem .5rem;border-top:1px solid var(--bd);}
+
+    /* ── APP BODY ── */
+    .app-body{margin-left:var(--sb-col);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .25s cubic-bezier(.4,0,.2,1);}
+    .sidebar:hover~.app-body,.sidebar.open~.app-body{margin-left:var(--sb);}
+
+    /* ── TOPBAR ── */
+    .topbar{
+      height:60px;background:var(--s1);border-bottom:1px solid var(--bd);
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 1.5rem;position:sticky;top:0;z-index:40;flex-shrink:0;
+    }
+    .topbar-left{display:flex;align-items:center;gap:1rem;}
+    .page-title{font-size:1rem;font-weight:700;color:var(--text);}
+    .breadcrumb{font-size:.78rem;color:var(--t3);}
+    .topbar-right{display:flex;align-items:center;gap:1rem;}
+    .api-pill{display:flex;align-items:center;gap:.4rem;background:var(--s3);border:1px solid var(--bd2);border-radius:20px;padding:.3rem .75rem;font-size:.73rem;color:var(--t2);}
+    .api-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
+    .api-dot.err{background:var(--red);box-shadow:0 0 6px var(--red);animation:none;}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+    .live-chip{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171;font-size:.68rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;letter-spacing:.06em;}
+
+    /* ── PAGES ── */
+    .main{flex:1;overflow-y:auto;}
+    .page{display:none;padding:1.5rem;animation:fadeIn .25s ease;}
+    .page.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+    /* ── SECTION HEADER ── */
+    .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+    .section-title{font-size:.95rem;font-weight:700;color:var(--text);}
+    .section-sub{font-size:.75rem;color:var(--t3);margin-top:.15rem;}
+
+    /* ── KPI CARDS ── */
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+    @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+    .kpi-card{
+      background:var(--s2);border:1px solid var(--bd);border-radius:12px;
+      padding:1.25rem 1.5rem;position:relative;overflow:hidden;
+      transition:border-color .15s,transform .15s;
+    }
+    .kpi-card:hover{border-color:var(--bd2);transform:translateY(-1px);}
+    .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);opacity:.6;}
+    .kpi-card.green::before{background:var(--green);}
+    .kpi-card.yellow::before{background:var(--yellow);}
+    .kpi-card.red::before{background:var(--red);}
+    .kpi-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:.5rem;}
+    .kpi-value{font-size:2rem;font-weight:800;color:var(--text);line-height:1;}
+    .kpi-sub{font-size:.75rem;color:var(--t2);margin-top:.4rem;display:flex;align-items:center;gap:.3rem;}
+    .kpi-trend{font-size:.72rem;font-weight:600;padding:.1rem .4rem;border-radius:4px;}
+    .kpi-trend.up{background:rgba(34,197,94,.15);color:var(--green);}
+    .kpi-trend.dn{background:rgba(239,68,68,.15);color:var(--red);}
+
+    /* ── CHART GRID ── */
+    .chart-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+    @media(max-width:1000px){.chart-grid{grid-template-columns:1fr;}}
+    .chart-card{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:1.25rem;}
+    .chart-title{font-size:.8rem;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem;}
+    .chart-wrap{position:relative;height:200px;}
+
+    /* ── BOTTOM GRID ── */
+    .bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    @media(max-width:1000px){.bottom-grid{grid-template-columns:1fr;}}
+
+    /* ── PRIORITY BARS ── */
+    .pri-list{display:flex;flex-direction:column;gap:.75rem;margin-top:.25rem;}
+    .pri-row{display:flex;align-items:center;gap:.75rem;}
+    .pri-name{font-size:.78rem;color:var(--t2);width:60px;flex-shrink:0;}
+    .pri-bar-bg{flex:1;height:8px;background:var(--s3);border-radius:999px;overflow:hidden;}
+    .pri-bar{height:100%;border-radius:999px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+    .pri-pct{font-size:.72rem;color:var(--t3);width:32px;text-align:right;flex-shrink:0;}
+
+    /* ── ACTIVITY FEED ── */
+    .feed-list{display:flex;flex-direction:column;gap:.6rem;max-height:230px;overflow-y:auto;}
+    .feed-item{
+      display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;
+      background:var(--s3);border:1px solid var(--bd);border-radius:8px;
+      animation:slideIn .3s ease;
+    }
+    @keyframes slideIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+    .feed-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .feed-text{flex:1;font-size:.78rem;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .feed-meta{font-size:.68rem;color:var(--t3);flex-shrink:0;}
+
+    /* ── BADGE ── */
+    .badge{display:inline-flex;align-items:center;gap:.25rem;padding:.15rem .55rem;border-radius:999px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+    .b-critical{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);}
+    .b-high{background:rgba(249,115,22,.15);color:#fb923c;border:1px solid rgba(249,115,22,.3);}
+    .b-medium{background:rgba(234,179,8,.15);color:#fbbf24;border:1px solid rgba(234,179,8,.3);}
+    .b-low{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);}
+    .b-angry{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);}
+    .b-negative{background:rgba(234,179,8,.15);color:#fbbf24;border:1px solid rgba(234,179,8,.3);}
+    .b-neutral{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);}
+    .b-positive{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);}
+    .b-pii{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25);font-size:.62rem;}
+
+    /* ── CLASSIFY PAGE ── */
+    .classify-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+    @media(max-width:900px){.classify-layout{grid-template-columns:1fr;}}
+    .panel{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:1.5rem;display:flex;flex-direction:column;gap:1rem;}
+    .panel-hd{display:flex;align-items:center;justify-content:space-between;}
+    .panel-title{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);}
+    .samples{display:flex;flex-wrap:wrap;gap:.5rem;}
+    .sample-btn{
+      background:var(--s3);border:1px solid var(--bd2);color:var(--t2);
+      font-size:.73rem;padding:.3rem .7rem;border-radius:6px;cursor:pointer;transition:all .15s;
+    }
+    .sample-btn:hover{border-color:var(--accent);color:var(--accent2);}
+    .sample-btn.active{background:var(--ag);border-color:var(--accent);color:var(--accent2);}
+    textarea{
+      width:100%;min-height:170px;background:var(--bg);border:1px solid var(--bd);
+      border-radius:8px;color:var(--text);font-size:.88rem;line-height:1.6;
+      padding:.75rem 1rem;resize:vertical;outline:none;font-family:inherit;
+      transition:border-color .15s,box-shadow .15s;
+    }
+    textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--ag);}
+    textarea.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.15);}
+    .ta-footer{display:flex;justify-content:space-between;align-items:center;margin-top:.3rem;}
+    .val-msg{color:var(--red);font-size:.72rem;}
+    .char-ctr{font-size:.7rem;color:var(--t3);}
+    .char-ctr.warn{color:var(--yellow);}
+    .char-ctr.danger{color:var(--red);font-weight:700;}
+    .controls{display:flex;gap:.75rem;align-items:center;}
+    select.ch-sel{
+      background:var(--s3);border:1px solid var(--bd2);color:var(--t2);
+      padding:.45rem .75rem;border-radius:8px;font-size:.83rem;outline:none;cursor:pointer;font-family:inherit;
+    }
+    .cls-btn{
+      flex:1;background:var(--accent);border:none;color:#fff;font-size:.9rem;font-weight:600;
+      padding:.55rem 1.25rem;border-radius:8px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:.4rem;
+      transition:background .15s,box-shadow .15s,transform .1s;font-family:inherit;
+    }
+    .cls-btn:hover{background:#4f46e5;box-shadow:0 4px 16px rgba(99,102,241,.35);}
+    .cls-btn:active{transform:scale(.98);}
+    .cls-btn:disabled{background:#374151;color:#6b7280;cursor:not-allowed;box-shadow:none;}
+
+    /* pipeline */
+    .pipeline{display:none;align-items:center;padding:.5rem 0;}
+    .pipeline.vis{display:flex;}
+    .pip-step{display:flex;align-items:center;gap:.25rem;}
+    .pip-dot{width:8px;height:8px;border-radius:50%;background:var(--s3);border:1.5px solid var(--bd);transition:all .3s;}
+    .pip-lbl{font-size:.6rem;color:var(--t3);white-space:nowrap;transition:color .3s;}
+    .pip-line{flex:1;height:1px;background:var(--bd);margin:0 3px;min-width:10px;}
+    .pip-step.act .pip-dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px var(--accent);}
+    .pip-step.act .pip-lbl{color:var(--accent2);}
+    .pip-step.done .pip-dot{background:var(--green);border-color:var(--green);}
+    .pip-step.done .pip-lbl{color:var(--green);}
+
+    /* result cards */
+    .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+    .rcard{
+      background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:.75rem 1rem;
+      position:relative;opacity:0;transform:translateY(8px);
+      transition:opacity .3s,transform .3s,border-color .15s;
+    }
+    .rcard.in{opacity:1;transform:translateY(0);}
+    .rcard:hover{border-color:var(--bd2);}
+    .rcard-wide{grid-column:1/-1;}
+    .rcard-lbl{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:.3rem;}
+    .rcard-val{font-size:.9rem;font-weight:600;color:var(--text);}
+    .copy-btn{position:absolute;top:.4rem;right:.4rem;background:none;border:1px solid transparent;color:var(--t3);font-size:.62rem;padding:.1rem .3rem;border-radius:4px;cursor:pointer;opacity:0;transition:all .15s;}
+    .rcard:hover .copy-btn{opacity:1;border-color:var(--bd);}
+    .copy-btn.cp{color:var(--green);}
+    .conf-wrap{background:var(--s3);border-radius:999px;height:7px;overflow:hidden;margin-top:.4rem;}
+    .conf-bar{height:100%;border-radius:999px;transition:width .7s ease;}
+    .cf-low{background:linear-gradient(90deg,#ef4444,#f87171);}
+    .cf-med{background:linear-gradient(90deg,#d97706,#fbbf24);}
+    .cf-hi{background:linear-gradient(90deg,#6366f1,#a78bfa);}
+    .cf-top{background:linear-gradient(90deg,#059669,#4ade80);}
+    .flag{border-radius:6px;padding:.35rem .75rem;font-size:.75rem;font-weight:600;grid-column:1/-1;display:flex;align-items:center;gap:.5rem;}
+    .flag-rev{background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:var(--yellow);}
+    .flag-blk{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--t3);gap:.75rem;text-align:center;padding:2.5rem;min-height:220px;}
+    .empty-state svg{opacity:.15;}
+    .empty-state p{font-size:.83rem;}
+    .empty-hint{font-size:.72rem;opacity:.55;}
+    .skel-grid{display:none;grid-template-columns:1fr 1fr;gap:.75rem;}
+    .skel-grid.vis{display:grid;}
+    .skel-card{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:.75rem 1rem;overflow:hidden;position:relative;}
+    .skel-card::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);animation:shim 1.5s infinite;}
+    @keyframes shim{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+    .sk{background:rgba(255,255,255,.06);border-radius:4px;}
+
+    /* result tabs */
+    .rtabs{display:flex;gap:.3rem;}
+    .rtab{background:none;border:1px solid transparent;color:var(--t3);font-size:.7rem;padding:.18rem .45rem;border-radius:4px;cursor:pointer;transition:all .15s;font-family:inherit;}
+    .rtab:hover{border-color:var(--bd);color:var(--t2);}
+    .rtab.active{background:var(--ag);border-color:var(--accent);color:var(--accent2);}
+
+    /* status bar */
+    .status-bar{background:var(--s1);border-top:1px solid var(--bd);padding:.45rem 1.5rem;display:flex;align-items:center;gap:2rem;font-size:.73rem;flex-wrap:wrap;}
+    .st-item{display:flex;align-items:center;gap:.4rem;}
+    .st-lbl{color:var(--t3);font-size:.67rem;text-transform:uppercase;letter-spacing:.06em;}
+    .st-val{color:var(--t2);font-weight:600;}
+    .pii-yes{color:var(--red);font-weight:700;}
+    .pii-no{color:var(--green);font-weight:700;}
+
+    /* toast */
+    .toast-wrap{position:fixed;bottom:3rem;right:1.5rem;display:flex;flex-direction:column-reverse;gap:.5rem;z-index:200;pointer-events:none;}
+    .toast{background:var(--s3);border:1px solid var(--bd2);color:var(--text);font-size:.8rem;padding:.55rem .9rem;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.5);pointer-events:all;display:flex;align-items:center;gap:.5rem;animation:toastIn .2s ease;max-width:280px;}
+    .toast.ok{border-left:3px solid var(--green);}
+    .toast.er{border-left:3px solid var(--red);}
+    @keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .err-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:8px;padding:.75rem 1rem;font-size:.82rem;grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;}
+    .retry-btn{background:none;border:1px solid var(--red);color:var(--red);padding:.2rem .55rem;border-radius:4px;cursor:pointer;font-size:.78rem;transition:all .15s;font-family:inherit;}
+    .retry-btn:hover{background:rgba(239,68,68,.1);}
+
+    /* ── HISTORY PAGE ── */
+    .filter-bar{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;}
+    .search-wrap{position:relative;flex:1;min-width:180px;}
+    .search-wrap svg{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--t3);}
+    .search-input{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--text);padding:.45rem .75rem .45rem 2.25rem;border-radius:8px;font-size:.83rem;outline:none;font-family:inherit;transition:border-color .15s;}
+    .search-input:focus{border-color:var(--accent);}
+    .filter-sel{background:var(--s2);border:1px solid var(--bd);color:var(--t2);padding:.42rem .7rem;border-radius:8px;font-size:.78rem;outline:none;cursor:pointer;font-family:inherit;}
+    .tbl-wrap{background:var(--s2);border:1px solid var(--bd);border-radius:12px;overflow:hidden;}
+    table{width:100%;border-collapse:collapse;}
+    thead{background:var(--s3);}
+    th{padding:.75rem 1rem;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);text-align:left;border-bottom:1px solid var(--bd);}
+    td{padding:.7rem 1rem;font-size:.8rem;color:var(--t2);border-bottom:1px solid var(--bd);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    tr.trow:hover td{background:rgba(255,255,255,.02);cursor:pointer;}
+    .tkt-id{font-family:monospace;font-size:.72rem;color:var(--t3);}
+    .tkt-preview{color:var(--text);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .conf-mini{font-size:.75rem;font-weight:600;}
+    .conf-hi{color:var(--green);}
+    .conf-med{color:#a78bfa;}
+    .conf-lo{color:var(--red);}
+    .expanded-row td{padding:0;}
+    .expanded-content{padding:1rem;background:var(--bg);border-top:1px solid var(--bd);}
+    .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .exp-label{font-size:.68rem;font-weight:600;text-transform:uppercase;color:var(--t3);margin-bottom:.25rem;}
+    .exp-val{font-size:.82rem;color:var(--text);}
+    .tbl-footer{padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bd);background:var(--s3);}
+    .tbl-info{font-size:.75rem;color:var(--t3);}
+    .tbl-pages{display:flex;gap:.35rem;}
+    .pg-btn{background:none;border:1px solid var(--bd);color:var(--t2);padding:.2rem .5rem;border-radius:4px;cursor:pointer;font-size:.75rem;transition:all .15s;font-family:inherit;}
+    .pg-btn:hover{border-color:var(--accent);color:var(--accent2);}
+    .pg-btn.active{background:var(--ag);border-color:var(--accent);color:var(--accent2);}
+
+    /* ── REVIEW QUEUE ── */
+    .queue-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;}
+    .qstat{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:1rem 1.25rem;}
+    .qstat-num{font-size:1.75rem;font-weight:800;}
+    .qstat-lbl{font-size:.72rem;color:var(--t3);margin-top:.25rem;}
+    .queue-list{display:flex;flex-direction:column;gap:1rem;}
+    .qcard{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:1.25rem;transition:border-color .15s;}
+    .qcard:hover{border-color:var(--bd2);}
+    .qcard-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem;}
+    .qcard-id{font-family:monospace;font-size:.72rem;color:var(--t3);}
+    .wait-chip{font-size:.68rem;padding:.15rem .45rem;border-radius:4px;font-weight:600;}
+    .wait-ok{background:rgba(34,197,94,.12);color:var(--green);}
+    .wait-warn{background:rgba(234,179,8,.12);color:var(--yellow);}
+    .wait-crit{background:rgba(239,68,68,.12);color:var(--red);}
+    .qcard-text{font-size:.83rem;color:var(--t2);line-height:1.5;margin-bottom:.75rem;}
+    .qcard-badges{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.75rem;}
+    .qcard-notes{width:100%;background:var(--bg);border:1px solid var(--bd);color:var(--text);padding:.5rem .75rem;border-radius:6px;font-size:.78rem;outline:none;margin-bottom:.75rem;font-family:inherit;resize:none;}
+    .qcard-notes:focus{border-color:var(--accent);}
+    .qcard-actions{display:flex;gap:.5rem;}
+    .act-btn{flex:1;padding:.45rem .75rem;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid;transition:all .15s;font-family:inherit;}
+    .act-approve{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:var(--green);}
+    .act-approve:hover{background:rgba(34,197,94,.22);}
+    .act-override{background:rgba(234,179,8,.1);border-color:rgba(234,179,8,.3);color:var(--yellow);}
+    .act-override:hover{background:rgba(234,179,8,.2);}
+    .act-escalate{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:var(--red);}
+    .act-escalate:hover{background:rgba(239,68,68,.2);}
+
+    /* ── ADMIN PAGE ── */
+    .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+    @media(max-width:900px){.admin-grid{grid-template-columns:1fr;}}
+    .admin-card{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:1.5rem;}
+    .admin-card-title{font-size:.8rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem;}
+    .prompt-cards{display:flex;flex-direction:column;gap:.75rem;}
+    .prompt-card{
+      border:1px solid var(--bd);border-radius:8px;padding:1rem;cursor:pointer;transition:all .2s;position:relative;
+    }
+    .prompt-card.sel{border-color:var(--accent);background:var(--ag);}
+    .prompt-card:hover:not(.sel){border-color:var(--bd2);}
+    .pc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;}
+    .pc-id{font-size:.78rem;font-weight:700;color:var(--text);}
+    .pc-active{font-size:.65rem;padding:.12rem .4rem;border-radius:4px;font-weight:700;background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+    .pc-desc{font-size:.75rem;color:var(--t2);}
+    .pc-date{font-size:.68rem;color:var(--t3);margin-top:.3rem;}
+    .activate-btn{margin-top:.75rem;width:100%;background:var(--accent);border:none;color:#fff;padding:.4rem;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s;font-family:inherit;}
+    .activate-btn:hover{background:#059669;}
+    .toggle-list{display:flex;flex-direction:column;gap:.9rem;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;}
+    .toggle-info .t-name{font-size:.83rem;font-weight:600;color:var(--text);}
+    .toggle-info .t-desc{font-size:.72rem;color:var(--t3);margin-top:.1rem;}
+    .toggle{position:relative;width:42px;height:24px;flex-shrink:0;}
+    .toggle input{opacity:0;width:0;height:0;}
+    .toggle-track{position:absolute;inset:0;background:var(--s3);border-radius:999px;cursor:pointer;transition:background .2s;border:1px solid var(--bd2);}
+    .toggle input:checked+.toggle-track{background:var(--accent);}
+    .toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none;}
+    .toggle input:checked~.toggle-thumb{transform:translateX(18px);}
+    .model-opts{display:flex;flex-direction:column;gap:.6rem;margin-top:.25rem;}
+    .model-opt{display:flex;align-items:center;gap:.75rem;padding:.7rem .9rem;border:1px solid var(--bd);border-radius:8px;cursor:pointer;transition:all .15s;}
+    .model-opt.sel{border-color:var(--accent);background:var(--ag);}
+    .model-opt:hover:not(.sel){border-color:var(--bd2);}
+    .model-dot{width:10px;height:10px;border-radius:50%;background:var(--bd2);border:2px solid var(--bd2);transition:all .2s;}
+    .model-opt.sel .model-dot{background:var(--accent);border-color:var(--accent);}
+    .model-name{font-size:.82rem;font-weight:600;color:var(--text);}
+    .model-tag{font-size:.65rem;color:var(--t3);}
+    .budget-row{display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.78rem;color:var(--t2);}
+    .budget-bar-bg{background:var(--s3);border-radius:999px;height:10px;overflow:hidden;}
+    .budget-bar{background:linear-gradient(90deg,var(--accent),var(--accent2));height:100%;border-radius:999px;transition:width 1s ease;}
+    .budget-info{font-size:.72rem;color:var(--t3);margin-top:.35rem;}
+
+    /* scrollbar */
+    ::-webkit-scrollbar{width:5px;height:5px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:999px;}
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎫</div>
+    <div>
+      <div class="logo-text">TicketAI</div>
+      <div class="logo-sub logo-text" style="font-size:.62rem;">Support Intelligence</div>
+    </div>
+  </div>
+  <div class="nav-list">
+    <button class="nav-item active" data-page="classify" onclick="nav(this)">
+      <span class="nav-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+      <span class="nav-label">Classify</span>
+    </button>
+    <button class="nav-item" data-page="dashboard" onclick="nav(this)">
+      <span class="nav-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg></span>
+      <span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-item" data-page="history" onclick="nav(this)">
+      <span class="nav-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+      <span class="nav-label">History</span>
+    </button>
+    <button class="nav-item" data-page="queue" onclick="nav(this)">
+      <span class="nav-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+      <span class="nav-label">Review Queue</span>
+      <span class="nav-badge">3</span>
+    </button>
+    <button class="nav-item" data-page="admin" onclick="nav(this)">
+      <span class="nav-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.8"/></svg></span>
+      <span class="nav-label">Admin</span>
+    </button>
+  </div>
+  <div class="sidebar-footer">
+    <div class="nav-item" style="cursor:default;pointer-events:none;">
+      <span class="nav-icon" style="font-size:11px;color:var(--t3);">v1</span>
+      <span class="nav-label" style="font-size:.68rem;color:var(--t3);">TicketAI v1.0.0</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ── APP BODY ── -->
+<div class="app-body">
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="page-title" id="pageTitle">Classify Ticket</span>
+    </div>
+    <div class="topbar-right">
+      <div class="api-pill"><div class="api-dot" id="apiDot"></div><span id="apiTxt">Checking…</span></div>
+      <div class="live-chip">● LIVE</div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page" id="page-dashboard">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Total Tickets</div>
+          <div class="kpi-value" id="kpi-total">0</div>
+          <div class="kpi-sub"><span class="kpi-trend up">↑ 12%</span> vs yesterday</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">Avg Confidence</div>
+          <div class="kpi-value" id="kpi-conf">0%</div>
+          <div class="kpi-sub"><span class="kpi-trend up">↑ 2.1%</span> this week</div>
+        </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-label">Session Cost</div>
+          <div class="kpi-value" id="kpi-cost">$0.00</div>
+          <div class="kpi-sub"><span style="color:var(--t3);">~$0.000067 / ticket</span></div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-label">Review Queue</div>
+          <div class="kpi-value" style="color:var(--red);" id="kpi-queue">3</div>
+          <div class="kpi-sub"><span class="kpi-trend dn">Needs attention</span></div>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-title">Ticket Volume — Last 7 Days</div>
+          <div class="chart-wrap"><canvas id="chartVolume"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Category Distribution</div>
+          <div class="chart-wrap"><canvas id="chartCat"></canvas></div>
+        </div>
+      </div>
+
+      <div class="bottom-grid">
+        <div class="chart-card">
+          <div class="chart-title">Priority Breakdown</div>
+          <div class="pri-list">
+            <div class="pri-row"><span class="pri-name" style="color:var(--red);">Critical</span><div class="pri-bar-bg"><div class="pri-bar" style="background:var(--red);width:0%" data-w="8%"></div></div><span class="pri-pct">8%</span></div>
+            <div class="pri-row"><span class="pri-name" style="color:var(--orange);">High</span><div class="pri-bar-bg"><div class="pri-bar" style="background:var(--orange);width:0%" data-w="24%"></div></div><span class="pri-pct">24%</span></div>
+            <div class="pri-row"><span class="pri-name" style="color:var(--yellow);">Medium</span><div class="pri-bar-bg"><div class="pri-bar" style="background:var(--yellow);width:0%" data-w="45%"></div></div><span class="pri-pct">45%</span></div>
+            <div class="pri-row"><span class="pri-name" style="color:var(--green);">Low</span><div class="pri-bar-bg"><div class="pri-bar" style="background:var(--green);width:0%" data-w="23%"></div></div><span class="pri-pct">23%</span></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title" style="display:flex;justify-content:space-between;"><span>Live Activity</span><span style="color:var(--green);font-size:.68rem;">● updating</span></div>
+          <div class="feed-list" id="activityFeed"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CLASSIFY ══ -->
+    <div class="page active" id="page-classify">
+      <div class="classify-layout">
+        <div class="panel">
+          <div class="panel-hd">
+            <div class="panel-title">Ticket Input</div>
+            <span style="font-size:.7rem;color:var(--t3);">Ctrl+Enter to submit</span>
+          </div>
+          <div class="samples">
+            <button class="sample-btn" onclick="fillSample(0)">📦 Delayed Delivery</button>
+            <button class="sample-btn" onclick="fillSample(1)">💳 Double Charged</button>
+            <button class="sample-btn" onclick="fillSample(2)">🔐 Login Broken</button>
+            <button class="sample-btn" onclick="fillSample(3)">📦 Wrong Item</button>
+            <button class="sample-btn" onclick="fillSample(4)">💰 Refund Request</button>
+          </div>
+          <div>
+            <textarea id="ticketText" placeholder="Paste or type a support ticket…" maxlength="4000" oninput="onTAInput()"></textarea>
+            <div class="ta-footer">
+              <span class="val-msg" id="valMsg" role="alert"></span>
+              <div style="display:flex;gap:.75rem;align-items:center;">
+                <button style="background:none;border:none;color:var(--t3);font-size:.7rem;cursor:pointer;padding:.2rem .35rem;border-radius:4px;" onclick="clearTA()">✕ Clear</button>
+                <span class="char-ctr" id="charCtr">0 / 4000</span>
+              </div>
+            </div>
+          </div>
+          <div class="controls">
+            <select id="channel" class="ch-sel">
+              <option value="web_form">Web Form</option>
+              <option value="email">Email</option>
+            </select>
+            <button class="cls-btn" id="clsBtn" onclick="doClassify()">Classify Ticket</button>
+          </div>
+          <div class="pipeline" id="pipeline">
+            <div class="pip-step" id="ps-pii"><div class="pip-dot"></div><span class="pip-lbl">PII</span></div>
+            <div class="pip-line"></div>
+            <div class="pip-step" id="ps-guard"><div class="pip-dot"></div><span class="pip-lbl">Guard</span></div>
+            <div class="pip-line"></div>
+            <div class="pip-step" id="ps-classify"><div class="pip-dot"></div><span class="pip-lbl">Classify</span></div>
+            <div class="pip-line"></div>
+            <div class="pip-step" id="ps-validate"><div class="pip-dot"></div><span class="pip-lbl">Validate</span></div>
+            <div class="pip-line"></div>
+            <div class="pip-step" id="ps-cost"><div class="pip-dot"></div><span class="pip-lbl">Cost</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <div class="panel-title">Classification Result</div>
+            <div class="rtabs" id="rtabs" style="display:none;"></div>
+          </div>
+          <div class="skel-grid" id="skelGrid">
+            <div class="skel-card"><div class="sk" style="width:40%;height:9px;margin-bottom:7px"></div><div class="sk" style="width:65%;height:15px"></div></div>
+            <div class="skel-card"><div class="sk" style="width:45%;height:9px;margin-bottom:7px"></div><div class="sk" style="width:60%;height:15px"></div></div>
+            <div class="skel-card"><div class="sk" style="width:35%;height:9px;margin-bottom:7px"></div><div class="sk" style="width:50%;height:21px;border-radius:999px"></div></div>
+            <div class="skel-card"><div class="sk" style="width:40%;height:9px;margin-bottom:7px"></div><div class="sk" style="width:55%;height:21px;border-radius:999px"></div></div>
+            <div class="skel-card" style="grid-column:1/-1"><div class="sk" style="width:30%;height:9px;margin-bottom:9px"></div><div class="sk" style="width:100%;height:7px;border-radius:999px"></div></div>
+          </div>
+          <div class="empty-state" id="emptyState">
+            <svg width="44" height="44" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.4" stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <p>Submit a ticket to see results</p>
+            <span class="empty-hint">Try one of the sample tickets above</span>
+          </div>
+          <div class="result-grid" id="resultGrid" style="display:none;"></div>
+        </div>
+      </div>
+      <div class="status-bar" id="statusBar">
+        <div class="st-item"><span class="st-lbl">Tokens</span><span class="st-val" id="stTokens">—</span></div>
+        <div class="st-item"><span class="st-lbl">Cost</span><span class="st-val" id="stCost">—</span></div>
+        <div class="st-item"><span class="st-lbl">PII</span><span class="st-val" id="stPii">—</span></div>
+        <div class="st-item"><span class="st-lbl">Prompt</span><span class="st-val" id="stPrompt">—</span></div>
+        <div class="st-item" style="margin-left:auto;"><span class="st-lbl">Session</span><span class="st-val" id="stSession">0 tickets</span></div>
+      </div>
+    </div>
+
+    <!-- ══ HISTORY ══ -->
+    <div class="page" id="page-history">
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input class="search-input" type="text" placeholder="Search tickets…" oninput="filterHistory(this.value)">
+        </div>
+        <select class="filter-sel" id="fCat" onchange="filterHistory()"><option value="">All Categories</option><option>delivery_issue</option><option>payment_issue</option><option>account_issue</option><option>product_issue</option><option>refund_request</option></select>
+        <select class="filter-sel" id="fPri" onchange="filterHistory()"><option value="">All Priorities</option><option>critical</option><option>high</option><option>medium</option><option>low</option></select>
+        <select class="filter-sel" id="fTeam" onchange="filterHistory()"><option value="">All Teams</option><option>logistics_team</option><option>payments_team</option><option>tech_team</option><option>fulfillment_team</option><option>customer_support</option></select>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Ticket Preview</th><th>Category</th><th>Team</th><th>Priority</th><th>Sentiment</th><th>Conf.</th><th>Date</th></tr>
+          </thead>
+          <tbody id="historyTbody"></tbody>
+        </table>
+        <div class="tbl-footer">
+          <span class="tbl-info" id="tblInfo">Showing 10 of 1,247 tickets</span>
+          <div class="tbl-pages">
+            <button class="pg-btn active">1</button>
+            <button class="pg-btn">2</button>
+            <button class="pg-btn">3</button>
+            <button class="pg-btn">…</button>
+            <button class="pg-btn">125</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REVIEW QUEUE ══ -->
+    <div class="page" id="page-queue">
+      <div class="queue-stats">
+        <div class="qstat"><div class="qstat-num" style="color:var(--red);">3</div><div class="qstat-lbl">Pending Review</div></div>
+        <div class="qstat"><div class="qstat-num" style="color:var(--yellow);">14 min</div><div class="qstat-lbl">Avg Wait Time</div></div>
+        <div class="qstat"><div class="qstat-num" style="color:var(--green);">94%</div><div class="qstat-lbl">Approval Rate (7d)</div></div>
+      </div>
+      <div class="queue-list" id="queueList"></div>
+    </div>
+
+    <!-- ══ ADMIN ══ -->
+    <div class="page" id="page-admin">
+      <div class="admin-grid">
+        <div class="admin-card">
+          <div class="admin-card-title">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.8"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Prompt Versions
+          </div>
+          <div class="prompt-cards" id="promptCards"></div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-title">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            Pipeline Modules
+          </div>
+          <div class="toggle-list">
+            <div class="toggle-row"><div class="toggle-info"><div class="t-name">PII Redaction</div><div class="t-desc">Mask emails, phones, card numbers</div></div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+            <div class="toggle-row"><div class="toggle-info"><div class="t-name">Injection Guard</div><div class="t-desc">LLM-based prompt injection detection</div></div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+            <div class="toggle-row"><div class="toggle-info"><div class="t-name">Response Validation</div><div class="t-desc">Pydantic schema + business rules</div></div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+            <div class="toggle-row"><div class="toggle-info"><div class="t-name">Cost Tracking</div><div class="t-desc">Token counting and cost logging</div></div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-title">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Model Selection
+          </div>
+          <div class="model-opts">
+            <div class="model-opt sel" onclick="selModel(this)"><div class="model-dot"></div><div><div class="model-name">gpt-4o-mini</div><div class="model-tag">Fast · $0.00015/1k tokens · Default</div></div></div>
+            <div class="model-opt" onclick="selModel(this)"><div class="model-dot"></div><div><div class="model-name">gpt-4o</div><div class="model-tag">Powerful · $0.005/1k tokens</div></div></div>
+            <div class="model-opt" onclick="selModel(this)"><div class="model-dot"></div><div><div class="model-name">claude-sonnet-4-6</div><div class="model-tag">Best reasoning · Anthropic</div></div></div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-title">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Daily Budget
+          </div>
+          <div class="budget-row"><span>Daily spend</span><span><strong>$0.023</strong> of $5.00</span></div>
+          <div class="budget-bar-bg"><div class="budget-bar" id="budgetBar" style="width:0%"></div></div>
+          <div class="budget-info">0.46% of daily budget used · Resets at midnight UTC</div>
+          <div style="margin-top:1.25rem;">
+            <div class="budget-row" style="margin-bottom:.35rem;"><span style="font-size:.78rem;color:var(--t2);">Session Calls</span><span style="font-size:.78rem;font-weight:600;" id="adminCalls">0</span></div>
+            <div class="budget-row" style="margin-bottom:.35rem;"><span style="font-size:.78rem;color:var(--t2);">Avg Cost/Ticket</span><span style="font-size:.78rem;font-weight:600;">$0.000067</span></div>
+            <div class="budget-row"><span style="font-size:.78rem;color:var(--t2);">Active Prompt</span><span class="badge b-positive" style="font-size:.65rem;" id="adminPrompt">v2</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── NAVIGATION ────────────────────────────────────────────────────────────
+const PAGE_TITLES = {dashboard:'Dashboard',classify:'Classify Ticket',history:'Ticket History',queue:'Review Queue',admin:'Admin'};
+function nav(btn) {
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  const pg = btn.dataset.page;
+  document.getElementById('page-'+pg).classList.add('active');
+  document.getElementById('pageTitle').textContent = PAGE_TITLES[pg];
+  if(pg==='dashboard') initDashboard();
+}
+
+// ── API HEALTH ────────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch('/health');
+    if(r.ok){ document.getElementById('apiDot').className='api-dot'; document.getElementById('apiTxt').textContent='API Connected'; }
+    else throw 0;
+  } catch { document.getElementById('apiDot').className='api-dot err'; document.getElementById('apiTxt').textContent='API Offline'; }
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+let chartsInit = false;
+function initDashboard() {
+  animateCounters();
+  animatePriBars();
+  if(!chartsInit){ buildCharts(); chartsInit=true; }
+  buildFeed();
+}
+
+function animateCounters() {
+  animNum('kpi-total', 1247, 1200, v=>v.toLocaleString());
+  animNum('kpi-conf', 87.3, 1200, v=>v.toFixed(1)+'%');
+  animNum('kpi-cost', 0.0234, 1200, v=>'$'+v.toFixed(4));
+}
+function animNum(id, target, dur, fmt) {
+  const el = document.getElementById(id);
+  const start = Date.now();
+  function step() {
+    const p = Math.min((Date.now()-start)/dur,1);
+    const ease = 1-Math.pow(1-p,3);
+    el.textContent = fmt(target*ease);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function animatePriBars() {
+  setTimeout(()=>{
+    document.querySelectorAll('.pri-bar').forEach(b=>{
+      b.style.width = b.dataset.w;
+    });
+  }, 300);
+}
+
+function buildCharts() {
+  const gridColor = 'rgba(26,48,40,.9)';
+  const tickColor = '#3d6b57';
+  Chart.defaults.color = tickColor;
+  Chart.defaults.borderColor = gridColor;
+
+  new Chart(document.getElementById('chartVolume'), {
+    type:'line',
+    data:{
+      labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets:[{
+        label:'Tickets',
+        data:[42,67,89,54,78,31,24],
+        borderColor:'#10b981',
+        backgroundColor:'rgba(16,185,129,.08)',
+        fill:true,
+        tension:.4,
+        pointBackgroundColor:'#10b981',
+        pointRadius:4,
+        pointHoverRadius:6,
+      },{
+        label:'Resolved',
+        data:[38,61,80,48,71,28,20],
+        borderColor:'#22c55e',
+        backgroundColor:'rgba(34,197,94,.06)',
+        fill:true,
+        tension:.4,
+        pointBackgroundColor:'#22c55e',
+        pointRadius:4,
+        pointHoverRadius:6,
+        borderDash:[4,4],
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{boxWidth:12,font:{size:11}}}},
+      scales:{
+        x:{grid:{color:gridColor},ticks:{font:{size:11}}},
+        y:{grid:{color:gridColor},ticks:{font:{size:11}},beginAtZero:true}
+      }
+    }
+  });
+
+  new Chart(document.getElementById('chartCat'), {
+    type:'doughnut',
+    data:{
+      labels:['Delivery','Payment','Account','Product','Refund','Other'],
+      datasets:[{
+        data:[28,22,18,16,12,4],
+        backgroundColor:['#10b981','#34d399','#06b6d4','#3b82f6','#a78bfa','#64748b'],
+        borderWidth:0,
+        hoverOffset:6,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      cutout:'70%',
+      plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:11},padding:12}}}
+    }
+  });
+}
+
+// ── ACTIVITY FEED ─────────────────────────────────────────────────────────
+const FEED_MOCK = [
+  {cat:'delivery_issue',pri:'high',color:'#fb923c',txt:'Package missing after 5 days — order #98765'},
+  {cat:'payment_issue',pri:'critical',color:'#ef4444',txt:'Double charge on order #44321 — $89.99'},
+  {cat:'account_issue',pri:'medium',color:'#a78bfa',txt:'Login broken after password reset x3'},
+  {cat:'refund_request',pri:'low',color:'#4ade80',txt:'Refund for damaged item received 2 weeks ago'},
+  {cat:'product_issue',pri:'medium',color:'#a78bfa',txt:'Wrong colour delivered — order #55102'},
+  {cat:'delivery_issue',pri:'high',color:'#fb923c',txt:'Delivery marked done but not received'},
+  {cat:'account_issue',pri:'high',color:'#fb923c',txt:'Two-factor auth loop preventing login'},
+];
+let feedIdx=0;
+function buildFeed(){
+  const feed=document.getElementById('activityFeed');
+  feed.innerHTML='';
+  FEED_MOCK.slice(0,5).forEach((f,i)=>addFeedItem(f,i===0));
+}
+function addFeedItem(f, prepend=true){
+  const feed=document.getElementById('activityFeed');
+  const div=document.createElement('div');
+  div.className='feed-item';
+  div.innerHTML=`<div class="feed-dot" style="background:${f.color}"></div><span class="feed-text">${f.txt}</span><span class="feed-meta">${['just now','1m','2m','4m','7m'][Math.floor(Math.random()*5)]}</span>`;
+  if(prepend&&feed.firstChild) feed.insertBefore(div,feed.firstChild);
+  else feed.appendChild(div);
+  if(feed.children.length>5) feed.removeChild(feed.lastChild);
+}
+setInterval(()=>{
+  feedIdx=(feedIdx+1)%FEED_MOCK.length;
+  if(document.getElementById('page-dashboard').classList.contains('active'))
+    addFeedItem(FEED_MOCK[feedIdx]);
+},4000);
+
+// ── CLASSIFY ─────────────────────────────────────────────────────────────
+const SAMPLES=[
+  {ch:'web_form',txt:"I am absolutely furious! My package was supposed to arrive 5 days ago and it still hasn't shown up. I've been waiting at home all week. This is completely unacceptable. Order #98765. I want an immediate update or a full refund!\nEmail: sanjay@xyzmail.com \nCredit card number: 1234567890123456"},
+  {ch:'email',  txt:"Subject: Double charge on my account\n\nHello,\n\nI noticed I was charged twice for the same order (#44321) placed on March 15th. Both charges of $89.99 appear on my bank statement. Please refund one of the charges immediately.\n\nThank you, A frustrated customer"},
+  {ch:'web_form',txt:"I can't log into my account at all. I keep getting 'Invalid credentials' even though I just reset my password 3 times. I need to access my order history urgently. Please help — I've been locked out for 2 days."},
+  {ch:'web_form',txt:"You sent me a blue shirt but I ordered red. Order #71234. I need the correct item shipped immediately or a full refund. Very disappointed with the quality control."},
+  {ch:'email',  txt:"Hi,\n\nI'd like to request a refund for order #88901. The product arrived damaged — the packaging was crushed and the item inside was broken. I have photos. Please process a full refund.\n\nThank you"},
+];
+const PSTEPS=['pii','guard','classify','validate','cost'];
+let clsHistory=[],clsTab=0,sessionCnt=0,pipTimer=null;
+
+document.addEventListener('DOMContentLoaded',()=>{
+  checkHealth();
+  document.getElementById('ticketText').addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='Enter') doClassify();
+  });
+  buildHistory();
+  buildQueue();
+  buildPromptCards();
+  setTimeout(()=>{ document.getElementById('budgetBar').style.width='0.46%'; },500);
+});
+
+function fillSample(i){
+  document.getElementById('ticketText').value=SAMPLES[i].txt;
+  document.getElementById('channel').value=SAMPLES[i].ch;
+  document.querySelectorAll('.sample-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.getElementById('valMsg').textContent='';
+  document.getElementById('ticketText').classList.remove('err');
+  onTAInput();
+}
+function onTAInput(){
+  const len=document.getElementById('ticketText').value.length;
+  const c=document.getElementById('charCtr');
+  c.textContent=`${len} / 4000`;
+  c.className='char-ctr'+(len>3800?' danger':len>3200?' warn':'');
+  if(len>0){document.getElementById('valMsg').textContent='';document.getElementById('ticketText').classList.remove('err');}
+}
+function clearTA(){
+  document.getElementById('ticketText').value='';
+  document.getElementById('charCtr').textContent='0 / 4000';
+  document.getElementById('charCtr').className='char-ctr';
+  document.getElementById('valMsg').textContent='';
+  document.getElementById('ticketText').classList.remove('err');
+  document.querySelectorAll('.sample-btn').forEach(b=>b.classList.remove('active'));
+}
+
+function startPipeline(){
+  document.getElementById('pipeline').classList.add('vis');
+  PSTEPS.forEach(s=>document.getElementById('ps-'+s).className='pip-step');
+  let i=0;
+  pipTimer=setInterval(()=>{
+    if(i>0) document.getElementById('ps-'+PSTEPS[i-1]).className='pip-step done';
+    if(i<PSTEPS.length){document.getElementById('ps-'+PSTEPS[i]).className='pip-step act';i++;}
+    else clearInterval(pipTimer);
+  },600);
+}
+function finishPipeline(){
+  clearInterval(pipTimer);
+  PSTEPS.forEach(s=>document.getElementById('ps-'+s).className='pip-step done');
+  setTimeout(()=>{
+    document.getElementById('pipeline').classList.remove('vis');
+    PSTEPS.forEach(s=>document.getElementById('ps-'+s).className='pip-step');
+  },1200);
+}
+
+async function doClassify(){
+  const txt=document.getElementById('ticketText').value.trim();
+  if(!txt){
+    document.getElementById('ticketText').classList.add('err');
+    document.getElementById('valMsg').textContent='Please enter a ticket before classifying.';
+    document.getElementById('ticketText').focus();
+    return;
+  }
+  const btn=document.getElementById('clsBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Classifying…';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('resultGrid').style.display='none';
+  document.getElementById('skelGrid').classList.add('vis');
+  startPipeline();
+  try{
+    const resp=await fetch('/classify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket_text:txt,channel:document.getElementById('channel').value})});
+    if(!resp.ok){const e=await resp.json();throw new Error(e.detail||resp.statusText);}
+    const data=await resp.json();
+    finishPipeline();
+    sessionCnt++;
+    document.getElementById('stSession').textContent=`${sessionCnt} ticket${sessionCnt!==1?'s':''}`;
+    document.getElementById('adminCalls').textContent=sessionCnt;
+    clsHistory.unshift(data);
+    if(clsHistory.length>3) clsHistory.pop();
+    clsTab=0;
+    renderTabs();
+    renderResult(data);
+    toast('Classified as '+fmt(data.issue_category),'ok');
+  }catch(e){
+    finishPipeline();
+    document.getElementById('skelGrid').classList.remove('vis');
+    document.getElementById('resultGrid').innerHTML=`<div class="err-msg"><span>⚠ ${e.message}</span><button class="retry-btn" onclick="doClassify()">Retry</button></div>`;
+    document.getElementById('resultGrid').style.display='grid';
+    toast(e.message,'er');
+  }finally{
+    btn.disabled=false;
+    btn.textContent='Classify Ticket';
+  }
+}
+
+function renderTabs(){
+  const el=document.getElementById('rtabs');
+  if(clsHistory.length<=1){el.style.display='none';return;}
+  el.style.display='flex';
+  el.innerHTML=clsHistory.map((_,i)=>`<button class="rtab ${i===clsTab?'active':''}" onclick="switchTab(${i})">${i===0?'Latest':'−'+i}</button>`).join('');
+}
+function switchTab(i){clsTab=i;renderTabs();renderResult(clsHistory[i]);}
+
+function renderResult(d){
+  document.getElementById('skelGrid').classList.remove('vis');
+  document.getElementById('emptyState').style.display='none';
+  const grid=document.getElementById('resultGrid');
+  const pct=Math.round(d.confidence_score*100);
+  const cc=pct<40?'cf-low':pct<70?'cf-med':pct<90?'cf-hi':'cf-top';
+  grid.innerHTML=`
+    <div class="rcard">${cp(fmt(d.issue_category))}<div class="rcard-lbl">Category</div><div class="rcard-val">${fmt(d.issue_category)}</div></div>
+    <div class="rcard">${cp(fmt(d.assigned_team))}<div class="rcard-lbl">Assigned Team</div><div class="rcard-val">${fmt(d.assigned_team)}</div></div>
+    <div class="rcard">${cp(d.priority)}<div class="rcard-lbl">Priority</div><div class="rcard-val"><span class="badge b-${d.priority}">${priIcon(d.priority)} ${d.priority.toUpperCase()}</span></div></div>
+    <div class="rcard">${cp(d.user_sentiment)}<div class="rcard-lbl">Sentiment</div><div class="rcard-val"><span class="badge b-${d.user_sentiment}">${senIcon(d.user_sentiment)} ${d.user_sentiment.toUpperCase()}</span></div></div>
+    <div class="rcard rcard-wide"><div class="rcard-lbl">Confidence — <strong>${pct}%</strong></div><div class="conf-wrap" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="conf-bar ${cc}" id="confBar" style="width:0%"></div></div></div>
+    <div class="rcard rcard-wide">${cp(d.reasoning)}<div class="rcard-lbl">Reasoning</div><div class="rcard-val" style="font-weight:400;font-size:.84rem;line-height:1.5">${d.reasoning}</div></div>
+    ${d.requires_human_review?'<div class="rcard flag flag-rev">⚠ Flagged for human review</div>':''}
+    ${d.injection_blocked?'<div class="rcard flag flag-blk">🚫 Injection attempt blocked</div>':''}
+  `;
+  grid.querySelectorAll('.rcard').forEach((c,i)=>{c.style.transitionDelay=`${i*50}ms`;requestAnimationFrame(()=>requestAnimationFrame(()=>c.classList.add('in')));});
+  setTimeout(()=>{const b=document.getElementById('confBar');if(b)b.style.width=pct+'%';},80);
+  const cost=d.cost_info;
+  document.getElementById('stTokens').textContent=cost?`${cost.input_tokens} in / ${cost.output_tokens} out`:'—';
+  document.getElementById('stCost').textContent=cost?`$${cost.total_cost_usd.toFixed(6)}`:'—';
+  document.getElementById('stPii').innerHTML=d.pii_detected?'<span class="pii-yes">PII DETECTED</span>':'<span class="pii-no">Clean</span>';
+  document.getElementById('stPrompt').textContent=d.prompt_version||'—';
+  grid.style.display='grid';
+}
+
+// ── HISTORY TABLE ─────────────────────────────────────────────────────────
+const H_DATA=[
+  {id:'TKT-1247',preview:'Package missing for 5 days, order #98765...',cat:'delivery_issue',team:'logistics_team',pri:'high',sent:'angry',conf:.91,date:'2m ago',pii:true},
+  {id:'TKT-1246',preview:'Double charged for order #44321, $89.99 twice...',cat:'payment_issue',team:'payments_team',pri:'critical',sent:'angry',conf:.95,date:'8m ago',pii:false},
+  {id:'TKT-1245',preview:'Cannot log in, invalid credentials after 3 resets...',cat:'account_issue',team:'tech_team',pri:'medium',sent:'negative',conf:.88,date:'15m ago',pii:false},
+  {id:'TKT-1244',preview:'Wrong colour delivered, ordered red got blue...',cat:'product_issue',team:'fulfillment_team',pri:'medium',sent:'negative',conf:.82,date:'31m ago',pii:false},
+  {id:'TKT-1243',preview:'Refund request for damaged packaging on arrival...',cat:'refund_request',team:'customer_support',pri:'low',sent:'neutral',conf:.79,date:'1h ago',pii:false},
+  {id:'TKT-1242',preview:'App crashes every time I try to check order status...',cat:'account_issue',team:'tech_team',pri:'high',sent:'negative',conf:.86,date:'1h ago',pii:false},
+  {id:'TKT-1241',preview:'Item arrived 3 weeks late, compensation requested...',cat:'delivery_issue',team:'logistics_team',pri:'medium',sent:'negative',conf:.90,date:'2h ago',pii:false},
+  {id:'TKT-1240',preview:'Coupon code not working at checkout, order #55234...',cat:'payment_issue',team:'payments_team',pri:'low',sent:'neutral',conf:.77,date:'3h ago',pii:false},
+  {id:'TKT-1239',preview:'Product description misleading, want refund...',cat:'refund_request',team:'customer_support',pri:'medium',sent:'negative',conf:.84,date:'4h ago',pii:false},
+  {id:'TKT-1238',preview:'Account locked after failed payment attempt...',cat:'account_issue',team:'tech_team',pri:'high',sent:'angry',conf:.93,date:'5h ago',pii:true},
+];
+let expandedRow=null;
+function buildHistory(){
+  renderHistoryRows(H_DATA);
+}
+function renderHistoryRows(rows){
+  const tb=document.getElementById('historyTbody');
+  tb.innerHTML='';
+  rows.forEach(r=>{
+    const cc=r.conf>=.85?'conf-hi':r.conf>=.70?'conf-med':'conf-lo';
+    const tr=document.createElement('tr');
+    tr.className='trow';
+    tr.innerHTML=`
+      <td><span class="tkt-id">${r.id}</span></td>
+      <td><span class="tkt-preview">${r.preview}</span></td>
+      <td><span style="font-size:.75rem;color:var(--t2);">${fmt(r.cat)}</span></td>
+      <td><span style="font-size:.75rem;color:var(--t2);">${fmt(r.team)}</span></td>
+      <td><span class="badge b-${r.pri}" style="font-size:.65rem;">${r.pri.toUpperCase()}</span></td>
+      <td><span class="badge b-${r.sent}" style="font-size:.65rem;">${r.sent.toUpperCase()}</span></td>
+      <td><span class="conf-mini ${cc}">${Math.round(r.conf*100)}%</span></td>
+      <td style="font-size:.73rem;color:var(--t3);">${r.date}${r.pii?` <span class="badge b-pii">PII</span>`:''}</td>
+    `;
+    tr.onclick=()=>toggleExpand(tr,r);
+    tb.appendChild(tr);
+  });
+  document.getElementById('tblInfo').textContent=`Showing ${rows.length} of 1,247 tickets`;
+}
+function toggleExpand(tr,r){
+  const next=tr.nextElementSibling;
+  if(next&&next.classList.contains('expanded-row')){next.remove();return;}
+  document.querySelectorAll('.expanded-row').forEach(e=>e.remove());
+  const exp=document.createElement('tr');
+  exp.className='expanded-row';
+  exp.innerHTML=`<td colspan="8"><div class="expanded-content">
+    <div class="exp-grid">
+      <div><div class="exp-label">Full Ticket Preview</div><div class="exp-val" style="line-height:1.5;color:var(--t2);">${r.preview}</div></div>
+      <div>
+        <div class="exp-label">Classification Details</div>
+        <div style="display:flex;flex-direction:column;gap:.35rem;margin-top:.25rem;">
+          <div style="font-size:.78rem;color:var(--t2);">Category: <strong style="color:var(--text);">${fmt(r.cat)}</strong></div>
+          <div style="font-size:.78rem;color:var(--t2);">Team: <strong style="color:var(--text);">${fmt(r.team)}</strong></div>
+          <div style="font-size:.78rem;color:var(--t2);">Confidence: <strong style="color:var(--text);">${Math.round(r.conf*100)}%</strong></div>
+        </div>
+      </div>
+    </div>
+  </div></td>`;
+  tr.after(exp);
+}
+function filterHistory(val){
+  const q=(typeof val==='string'?val:document.querySelector('.search-input').value).toLowerCase();
+  const cat=document.getElementById('fCat').value;
+  const pri=document.getElementById('fPri').value;
+  const team=document.getElementById('fTeam').value;
+  const filtered=H_DATA.filter(r=>{
+    const matchQ=!q||r.preview.toLowerCase().includes(q)||r.id.toLowerCase().includes(q);
+    const matchCat=!cat||r.cat===cat;
+    const matchPri=!pri||r.pri===pri;
+    const matchTeam=!team||r.team===team;
+    return matchQ&&matchCat&&matchPri&&matchTeam;
+  });
+  renderHistoryRows(filtered);
+}
+
+// ── REVIEW QUEUE ──────────────────────────────────────────────────────────
+const Q_DATA=[
+  {id:'TKT-1246',text:'Hello, I was charged twice for order #44321 placed on March 15th. Both charges of $89.99 appear on my bank statement. This is very concerning — please refund one charge immediately.',cat:'payment_issue',team:'payments_team',pri:'critical',sent:'angry',conf:.95,wait:'8 min',waitCls:'wait-crit',reason:'Confidence >0.9 but CRITICAL priority requires human sign-off on refunds.'},
+  {id:'TKT-1238',text:'My account is locked and I cannot access it. I was trying to update payment info when suddenly I got locked out. I need to access my account immediately — there are pending orders.',cat:'account_issue',team:'tech_team',pri:'high',sent:'angry',conf:.93,wait:'23 min',waitCls:'wait-warn',reason:'Account lockout may indicate security breach — requires human verification.'},
+  {id:'TKT-1231',text:'The refund I requested 10 days ago still hasn\'t been processed. I have already contacted support twice. This is my third attempt. I want an escalation to a senior team member.',cat:'refund_request',team:'customer_support',pri:'high',sent:'angry',conf:.85,wait:'45 min',waitCls:'wait-crit',reason:'Repeated contact pattern — customer escalation risk flagged.'},
+];
+function buildQueue(){
+  const list=document.getElementById('queueList');
+  list.innerHTML='';
+  Q_DATA.forEach(q=>{
+    const div=document.createElement('div');
+    div.className='qcard';
+    div.innerHTML=`
+      <div class="qcard-top">
+        <div>
+          <span class="tkt-id">${q.id}</span>
+          <div style="font-size:.72rem;color:var(--t3);margin-top:.2rem;">Reason: ${q.reason}</div>
+        </div>
+        <span class="wait-chip ${q.waitCls}">⏱ ${q.wait}</span>
+      </div>
+      <div class="qcard-text">${q.text}</div>
+      <div class="qcard-badges">
+        <span class="badge b-${q.pri}">${q.pri.toUpperCase()}</span>
+        <span class="badge b-${q.sent}">${q.sent.toUpperCase()}</span>
+        <span style="font-size:.72rem;color:var(--t2);">${fmt(q.cat)}</span>
+        <span style="font-size:.72rem;color:var(--t2);">→ ${fmt(q.team)}</span>
+        <span style="font-size:.72rem;color:var(--t2);">Conf: ${Math.round(q.conf*100)}%</span>
+      </div>
+      <textarea class="qcard-notes" rows="2" placeholder="Add agent notes…"></textarea>
+      <div class="qcard-actions">
+        <button class="act-btn act-approve" onclick="qAction(this,'approve','${q.id}')">✓ Approve</button>
+        <button class="act-btn act-override" onclick="qAction(this,'override','${q.id}')">✎ Override</button>
+        <button class="act-btn act-escalate" onclick="qAction(this,'escalate','${q.id}')">↑ Escalate</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+function qAction(btn,action,id){
+  const card=btn.closest('.qcard');
+  const msgs={approve:'Approved and routed to team.',override:'Override saved — re-classifying.',escalate:'Escalated to senior support.'};
+  card.style.opacity='.5';card.style.pointerEvents='none';
+  toast(`${id}: ${msgs[action]}`,'ok');
+  setTimeout(()=>card.remove(),800);
+  const num=document.querySelectorAll('.qcard').length-1;
+  document.querySelector('[data-page="queue"] .nav-badge').textContent=num||'';
+  if(!num) document.querySelector('[data-page="queue"] .nav-badge').style.display='none';
+}
+
+// ── ADMIN PROMPTS ─────────────────────────────────────────────────────────
+const PROMPTS=[
+  {id:'v1',desc:'Basic classification prompt',model:'gpt-4o-mini',date:'2024-01-01',active:false},
+  {id:'v2',desc:'Chain-of-thought with step-by-step reasoning',model:'gpt-4o-mini',date:'2024-03-01',active:true},
+];
+function buildPromptCards(){
+  const el=document.getElementById('promptCards');
+  el.innerHTML=PROMPTS.map(p=>`
+    <div class="prompt-card ${p.active?'sel':''}" id="pc-${p.id}">
+      <div class="pc-top">
+        <span class="pc-id">${p.id}</span>
+        ${p.active?'<span class="pc-active">Active</span>':''}
+      </div>
+      <div class="pc-desc">${p.desc}</div>
+      <div class="pc-date">Model: ${p.model} · Created ${p.date}</div>
+      ${!p.active?`<button class="activate-btn" onclick="activatePrompt('${p.id}')">Activate ${p.id}</button>`:''}
+    </div>
+  `).join('');
+}
+function activatePrompt(id){
+  PROMPTS.forEach(p=>p.active=p.id===id);
+  buildPromptCards();
+  document.getElementById('adminPrompt').textContent=id;
+  toast(`Prompt ${id} activated`,'ok');
+}
+function selModel(el){
+  document.querySelectorAll('.model-opt').forEach(m=>m.classList.remove('sel'));
+  el.classList.add('sel');
+  toast(`Model switched to ${el.querySelector('.model-name').textContent}`,'ok');
+}
+
+// ── SHARED ────────────────────────────────────────────────────────────────
+function cp(v){return `<button class="copy-btn" onclick="cpVal(this,'${String(v).replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">copy</button>`;}
+function cpVal(btn,v){navigator.clipboard.writeText(v).then(()=>{btn.textContent='✓';btn.classList.add('cp');setTimeout(()=>{btn.textContent='copy';btn.classList.remove('cp');},1500);});}
+function fmt(s){return(s||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
+function priIcon(p){return{low:'▽',medium:'◈',high:'▲',critical:'⚡'}[p]||'';}
+function senIcon(s){return{positive:'😊',neutral:'😐',negative:'😞',angry:'😡'}[s]||'';}
+
+function toast(msg,type='ok',ms=3000){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span>${type==='ok'?'✓':'✕'}</span><span>${msg}</span>`;
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(()=>{el.style.cssText+='opacity:0;transform:translateY(6px);transition:all .2s';setTimeout(()=>el.remove(),220);},ms);
+}
+</script>
+</body>
+</html>
